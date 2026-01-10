@@ -10,6 +10,7 @@ import PatientLabs from './components/PatientLabs';
 import { MOCK_PATIENTS, MOCK_APPOINTMENTS } from './constants';
 import { Patient, Appointment, Language, Theme } from './types';
 import { generateSOAPNote, analyzeVitals } from './services/gemini';
+import { logConnectionStatus } from './services/supabase';
 import { useI18n } from './i18n';
 import { 
   Plus, 
@@ -50,6 +51,11 @@ const App: React.FC = () => {
     document.documentElement.className = theme;
     localStorage.setItem('medi-pro-theme', theme);
   }, [lang, theme]);
+
+  // Test Supabase connection on app startup
+  useEffect(() => {
+    logConnectionStatus().catch(console.error);
+  }, []);
 
   const filteredPatients = useMemo(() => {
     if (!globalSearch) return MOCK_PATIENTS;
