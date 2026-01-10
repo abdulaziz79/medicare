@@ -1,0 +1,8 @@
+{
+  "name": "MediPro AI - Medical Professional Dashboard",
+  "description": "A comprehensive, AI-powered workspace for medical professionals, featuring clinical documentation, diagnostic support, patient management, and practice analytics.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
