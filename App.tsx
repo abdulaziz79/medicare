@@ -2,6 +2,9 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Routes, Route, useNavigate, useParams, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import Login from './components/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminDashboard from './components/AdminDashboard';
 import ClinicalCopilot from './components/ClinicalCopilot';
 import PatientChart from './components/PatientChart';
 import Schedule from './components/Schedule';
@@ -11,6 +14,7 @@ import { MOCK_PATIENTS, MOCK_APPOINTMENTS } from './constants';
 import { Patient, Appointment, Language, Theme } from './types';
 import { generateSOAPNote, analyzeVitals } from './services/gemini';
 import { logConnectionStatus } from './services/supabase';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useI18n } from './i18n';
 import { 
   Plus, 
@@ -33,7 +37,7 @@ import {
   Sparkles
 } from 'lucide-react';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
   const [theme, setTheme] = useState<Theme>(() => {
     return (localStorage.getItem('medi-pro-theme') as Theme) || 'dark';
@@ -420,36 +424,60 @@ const App: React.FC = () => {
   };
 
   return (
-    <Layout 
-        lang={lang}
-        setLang={setLang}
-        theme={theme}
-        setTheme={setTheme}
-        searchTerm={globalSearch}
-        onSearch={setGlobalSearch}
-    >
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/dashboard" element={<DashboardView />} />
-        <Route path="/patients" element={<PatientsListView />} />
-        <Route path="/patients/:id" element={<PatientDetailView />} />
-        <Route path="/patients/:id/labs" element={<PatientLabsView />} />
-        <Route path="/copilot" element={<ClinicalCopilot theme={theme} lang={lang} />} />
-        <Route 
-          path="/schedule" 
-          element={
-            <Schedule 
-              theme={theme}
+    <Routes>
+      <Route path="/login" element={<Login theme={theme} />} />
+      <Route
+        path="/*"
+        element={
+          <ProtectedRoute>
+            <Layout
               lang={lang}
-              appointments={appointments} 
-              onAddAppointment={(a) => setAppointments([...appointments, a])} 
-              onSelectPatient={handlePatientSelect} 
-            />
-          } 
-        />
-        <Route path="/analytics" element={<Analytics theme={theme} lang={lang} />} />
-      </Routes>
-    </Layout>
+              setLang={setLang}
+              theme={theme}
+              setTheme={setTheme}
+              searchTerm={globalSearch}
+              onSearch={setGlobalSearch}
+            >
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<DashboardView />} />
+                <Route path="/admin" element={
+                  <ProtectedRoute requireAdmin>
+                    <AdminDashboard theme={theme} lang={lang} />
+                  </ProtectedRoute>
+                } />
+                <Route path="/patients" element={<PatientsListView />} />
+                <Route path="/patients/:id" element={<PatientDetailView />} />
+                <Route path="/patients/:id/labs" element={<PatientLabsView />} />
+                <Route path="/copilot" element={<ClinicalCopilot theme={theme} lang={lang} />} />
+                <Route
+                  path="/schedule"
+                  element={
+                    <Schedule
+                      theme={theme}
+                      lang={lang}
+                      appointments={appointments}
+                      onAddAppointment={(a) => setAppointments([...appointments, a])}
+                      onSelectPatient={handlePatientSelect}
+                    />
+                  }
+                />
+                <Route path="/analytics" element={<Analytics theme={theme} lang={lang} />} />
+              </Routes>
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  );
+};
+
+// Main App component wrapped with AuthProvider
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 };
 

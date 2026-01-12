@@ -16,9 +16,12 @@ import {
   Globe,
   Sun,
   Moon,
+  User as UserIcon,
+  Settings,
 } from "lucide-react";
 import { Language, Theme } from "../types";
 import { useI18n } from "../i18n";
+import { useAuth } from "../contexts/AuthContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -41,9 +44,20 @@ const Layout: React.FC<LayoutProps> = ({
 }) => {
   const [isSidebarOpen, setIsSidebarOpen] = React.useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [showUserMenu, setShowUserMenu] = React.useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const t = useI18n(lang);
+  const { user, logout, isAdmin } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const menuItems = [
     {
@@ -66,6 +80,12 @@ const Layout: React.FC<LayoutProps> = ({
       label: t.analytics,
       icon: BarChart3,
     },
+    ...(isAdmin() ? [{
+      id: "admin",
+      path: "/admin",
+      label: "Admin",
+      icon: Settings,
+    }] : []),
   ];
 
   const isActiveRoute = (path: string) => {
@@ -188,7 +208,33 @@ const Layout: React.FC<LayoutProps> = ({
               </span>
             )}
           </div>
+          {/* User Info */}
+          {user && (isSidebarOpen || isMobileMenuOpen) && (
+            <div
+              className={`mb-3 p-3 rounded-lg ${
+                isDark ? "bg-slate-700/50" : "bg-slate-100"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  isDark ? "bg-blue-600/20" : "bg-blue-100"
+                }`}>
+                  <UserIcon className={`w-4 h-4 ${isDark ? "text-blue-400" : "text-blue-600"}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-medium truncate ${isDark ? "text-slate-50" : "text-slate-900"}`}>
+                    {user.name || user.email}
+                  </p>
+                  <p className={`text-xs truncate ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                    {user.role === "ADMIN" ? "Administrator" : "Doctor"}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <button
+            onClick={handleLogout}
             className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors ${
               isDark
                 ? "text-slate-400 hover:bg-red-500/10 hover:text-red-400"
@@ -307,6 +353,82 @@ const Layout: React.FC<LayoutProps> = ({
               ></span>
             </button>
 
+            {/* User Profile */}
+            <div className="relative">
+              <button
+                onClick={() => setShowUserMenu(!showUserMenu)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors ${
+                  isDark
+                    ? "hover:bg-slate-800"
+                    : "hover:bg-slate-100"
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  isDark ? "bg-blue-600/20" : "bg-blue-100"
+                }`}>
+                  <UserIcon className={`w-4 h-4 ${isDark ? "text-blue-400" : "text-blue-600"}`} />
+                </div>
+                <div className="hidden lg:block text-left">
+                  <p className={`text-sm font-medium ${isDark ? "text-slate-50" : "text-slate-900"}`}>
+                    {user?.name || user?.email?.split("@")[0] || "User"}
+                  </p>
+                  <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                    {user?.role === "ADMIN" ? "Administrator" : "Doctor"}
+                  </p>
+                </div>
+              </button>
+              
+              {/* User Dropdown Menu */}
+              {showUserMenu && (
+                <>
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowUserMenu(false)}
+                  />
+                  <div
+                    className={`absolute ${isRtl ? "left-0" : "right-0"} top-full mt-2 w-48 rounded-lg shadow-xl border z-50 ${
+                      isDark
+                        ? "bg-slate-800 border-slate-700"
+                        : "bg-white border-slate-200"
+                    }`}
+                  >
+                    <div className={`p-3 border-b ${isDark ? "border-slate-700" : "border-slate-200"}`}>
+                      <p className={`text-sm font-medium ${isDark ? "text-slate-50" : "text-slate-900"}`}>
+                        {user?.name || "User"}
+                      </p>
+                      <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                        {user?.email}
+                      </p>
+                      <p className={`text-xs mt-1 px-2 py-0.5 inline-block rounded ${
+                        user?.role === "ADMIN"
+                          ? isDark
+                            ? "bg-blue-600/20 text-blue-400"
+                            : "bg-blue-100 text-blue-600"
+                          : isDark
+                          ? "bg-slate-700 text-slate-400"
+                          : "bg-slate-100 text-slate-600"
+                      }`}>
+                        {user?.role === "ADMIN" ? "Administrator" : "Doctor"}
+                      </p>
+                    </div>
+                    <div className="p-1">
+                      <button
+                        onClick={handleLogout}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                          isDark
+                            ? "text-red-400 hover:bg-red-500/10"
+                            : "text-red-600 hover:bg-red-50"
+                        }`}
+                      >
+                        <LogOut className="w-4 h-4" />
+                        {t.signOut}
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+
             <div
               className={`flex items-center gap-2 lg:gap-3 ${
                 isRtl ? "pr-3 lg:pr-6 border-r" : "pl-3 lg:pl-6 border-l"
@@ -322,19 +444,19 @@ const Layout: React.FC<LayoutProps> = ({
                     isDark ? "text-slate-100" : "text-slate-900"
                   }`}
                 >
-                  Dr. Thompson
+                  {user?.name || "User"}
                 </p>
-                <p className="text-[10px] text-slate-500 truncate max-w-[120px]">
-                  City General Hospital
+                <p className={`text-[10px] truncate max-w-[120px] ${
+                  isDark ? "text-slate-400" : "text-slate-500"
+                }`}>
+                  {user?.role === "ADMIN" ? "Administrator" : "Doctor"}
                 </p>
               </div>
-              <img
-                src="https://picsum.photos/seed/doc/100/100"
-                className={`w-8 h-8 lg:w-9 lg:h-9 rounded-full border ${
-                  isDark ? "border-slate-700" : "border-slate-200"
-                }`}
-                alt="Dr Profile"
-              />
+              <div className={`w-8 h-8 lg:w-9 lg:h-9 rounded-full flex items-center justify-center border ${
+                isDark ? "bg-blue-600/20 border-slate-700" : "bg-blue-100 border-slate-200"
+              }`}>
+                <UserIcon className={`w-5 h-5 ${isDark ? "text-blue-400" : "text-blue-600"}`} />
+              </div>
             </div>
           </div>
         </header>
