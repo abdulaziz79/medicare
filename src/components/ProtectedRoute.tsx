@@ -1,7 +1,8 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+// import { useAuth } from "../contexts/AuthContext";
 import { Loader2 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,8 +15,16 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAdmin = false,
   requireDoctor = false,
 }) => {
-  const { user, loading } = useAuth();
+  // const { user, loading } = useAuth();
   const location = useLocation();
+  // TODO: Re-implement auth logic
+  // const user = null;
+  // const loading = false;
+
+  const { user, loading } = useAuth();
+
+  console.log("user", user);
+  console.log("loading", loading);
 
   // Show loading spinner while checking authentication
   if (loading) {

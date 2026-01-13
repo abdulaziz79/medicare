@@ -1,4 +1,4 @@
-import { testSupabaseConnection } from "../services/supabase.js";
+import { testSupabaseConnection } from "../src/services/supabase.js";
 
 async function main() {
   console.log("\n🧪 Testing Supabase Connection...\n");

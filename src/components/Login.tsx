@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LogIn, Mail, Lock, AlertCircle, Loader2 } from "lucide-react";
 import { Theme } from "../types";
+import { login } from "../services/auth";
 
 interface LoginProps {
   theme: Theme;
@@ -13,9 +14,30 @@ const Login: React.FC<LoginProps> = ({ theme }) => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const isDark = theme === "dark";
+
+  // Redirect to home if user is already authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/", { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${isDark ? "bg-slate-900" : "bg-slate-50"}`}>
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  // Redirect if already authenticated
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,11 +45,21 @@ const Login: React.FC<LoginProps> = ({ theme }) => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate("/dashboard");
+      // await login({ email, password });
+      const result = await login(email, password);
+
+      console.log("ress", result);
+
+      if(result && "id" in result) {
+        navigate("/dashboard");
+      } else {
+        setError(error?.message || "Login failed. Please check your credentials.");
+        setLoading(false);
+      }
+
     } catch (err: any) {
+      console.error("Login error:", err);
       setError(err.message || "Login failed. Please check your credentials.");
-    } finally {
       setLoading(false);
     }
   };

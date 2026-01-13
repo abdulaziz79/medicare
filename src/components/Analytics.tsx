@@ -28,7 +28,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Language, Theme } from '../types';
-import { useI18n } from '../i18n';
+import { useI18n } from '../utils/i18n';
 
 interface AnalyticsProps {
     lang: Language;

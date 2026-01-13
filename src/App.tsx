@@ -14,8 +14,7 @@ import { MOCK_PATIENTS, MOCK_APPOINTMENTS } from './constants';
 import { Patient, Appointment, Language, Theme } from './types';
 import { generateSOAPNote, analyzeVitals } from './services/gemini';
 import { logConnectionStatus } from './services/supabase';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { useI18n } from './i18n';
+import { useI18n } from './utils/i18n';
 import { 
   Plus, 
   Calendar as CalendarIcon, 
@@ -36,6 +35,8 @@ import {
   Loader2,
   Sparkles
 } from 'lucide-react';
+// import { AuthProvider } from './contexts/AuthContext';
+import { getCurrentUser } from './services/auth';
 
 const AppContent: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
@@ -475,9 +476,9 @@ const AppContent: React.FC = () => {
 // Main App component wrapped with AuthProvider
 const App: React.FC = () => {
   return (
-    <AuthProvider>
+    /* <AuthProvider> */
       <AppContent />
-    </AuthProvider>
+    /* </AuthProvider> */
   );
 };
 

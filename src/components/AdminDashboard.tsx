@@ -5,7 +5,7 @@ import type { User as AuthUser } from "../services/auth";
 import { sendCredentialsEmail, generateCredentialsEmail } from "../services/email";
 import { supabase } from "../services/supabase";
 import { Theme, Language } from "../types";
-import { useI18n } from "../i18n";
+import { useI18n } from "../utils/i18n";
 
 interface AdminDashboardProps {
   theme: Theme;

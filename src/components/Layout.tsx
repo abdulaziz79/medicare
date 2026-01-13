@@ -20,8 +20,8 @@ import {
   Settings,
 } from "lucide-react";
 import { Language, Theme } from "../types";
-import { useI18n } from "../i18n";
-import { useAuth } from "../contexts/AuthContext";
+import { useI18n } from "../utils/i18n";
+// import { useAuth } from "../contexts/AuthContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -48,7 +48,11 @@ const Layout: React.FC<LayoutProps> = ({
   const location = useLocation();
   const navigate = useNavigate();
   const t = useI18n(lang);
-  const { user, logout, isAdmin } = useAuth();
+  // const { user, logout, isAdmin } = useAuth();
+  // TODO: Re-implement auth logic
+  const user = null;
+  const logout = async () => {};
+  const isAdmin = () => false;
 
   const handleLogout = async () => {
     try {

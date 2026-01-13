@@ -10,7 +10,7 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { Patient, Language, Theme } from '../types';
-import { useI18n } from '../i18n';
+import { useI18n } from '../utils/i18n';
 
 interface PatientLabsProps {
   patient: Patient;

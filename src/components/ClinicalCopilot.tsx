@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader2, Sparkles, AlertCircle, ShieldCheck } from 'lucide-react';
 import { clinicalCopilotChat } from '../services/gemini';
 import { Message, Language, Theme } from '../types';
-import { useI18n } from '../i18n';
+import { useI18n } from '../utils/i18n';
 
 interface ClinicalCopilotProps {
   lang: Language;

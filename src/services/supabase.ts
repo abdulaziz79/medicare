@@ -96,21 +96,21 @@ export async function testSupabaseConnection() {
  * Log connection status to console (useful for debugging)
  */
 export async function logConnectionStatus() {
-  console.group("🔍 Supabase Connection Test");
-  console.log("URL:", supabaseUrl || "❌ Not set");
-  console.log(
-    "Anon Key:",
-    supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : "❌ Not set"
-  );
+  // console.group("🔍 Supabase Connection Test");
+  // console.log("URL:", supabaseUrl || "❌ Not set");
+  // console.log(
+  //   "Anon Key:",
+  //   supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : "❌ Not set"
+  // );
 
   const result = await testSupabaseConnection();
 
   if (result.connected) {
     console.log("✅ Status: Connected");
-    console.log("Message:", result.message);
-    if (result.url) {
-      console.log("Supabase URL:", result.url);
-    }
+    // console.log("Message:", result.message);
+    // if (result.url) {
+    //   console.log("Supabase URL:", result.url);
+    // }
   } else {
     console.error("❌ Status: Not Connected");
     console.error("Message:", result.message);

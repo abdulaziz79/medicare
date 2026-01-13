@@ -1,4 +1,4 @@
-import { supabase } from "./supabase";
+import { supabase } from "../lib/supabase";
 
 export interface User {
   id: string;
@@ -24,45 +24,87 @@ export interface CreateUserData {
 /**
  * Login with email and password
  */
-export async function login(credentials: LoginCredentials) {
+// export async function login(credentials: LoginCredentials) {
+//   try {
+//     // console.log("logininnnnnnnnnnnnn", credentials);
+//     const { data, error } = await supabase.auth.signInWithPassword({
+//       email: credentials.email,
+//       password: credentials.password,
+//     });
+
+//     console.log("wwwwwww")
+
+//     console.log("authData", data);
+//     console.log("authError", error);
+
+//     if (error) {
+//       throw new Error(error.message);
+//     }
+
+//     if (!data.user) {
+//       throw new Error("Login failed - no user returned");
+//     }
+
+//     // Get user from database using Supabase client
+//     const { data: userData, error: userError } = await supabase
+//       .from("users")
+//       .select("*")
+//       .eq("supabaseId", data.user.id)
+//       .single();
+
+//       console.log("userData", userData);
+//       console.log("userError", userError);
+
+//     if (userError || !userData) {
+//       console.error("User not found in database:", userError);
+//       throw new Error("User not found in database. Please contact an administrator.");
+//     }
+
+//     if (!userData.isActive) {
+//       throw new Error("Your account has been deactivated. Please contact an administrator.");
+//     }
+
+//     return {
+//       user: {
+//         id: userData.id,
+//         email: userData.email,
+//         name: userData.name,
+//         role: userData.role,
+//         supabaseId: userData.supabaseId,
+//         isActive: userData.isActive,
+//       },
+//       session: data.session,
+//     };
+//   } catch (error: any) {
+//     throw new Error(error.message || "Login failed");
+//   }
+// }
+
+export async function login(email: string, password: string) {
   try {
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password,
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
     });
 
-    if (authError) {
-      throw new Error(authError.message);
+    if(data.user) {
+      return data.user;
+    } else {
+      return error
+      throw new Error(error?.message || "Login failed. Please check your credentials.");
     }
 
-    if (!authData.user) {
-      throw new Error("Login failed - no user returned");
-    }
-
-    // Get user from database using Supabase client
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("supabaseId", authData.user.id)
-      .single();
-
-    if (userError || !userData || !userData.isActive) {
-      throw new Error("User not found or inactive");
-    }
-
-    return {
-      user: {
-        id: userData.id,
-        email: userData.email,
-        name: userData.name,
-        role: userData.role,
-        supabaseId: userData.supabaseId,
-        isActive: userData.isActive,
-      },
-      session: authData.session,
-    };
-  } catch (error: any) {
+  } catch (error) {
     throw new Error(error.message || "Login failed");
+  }
+}
+
+export async function getCurrentUser() {
+  try {
+    const { data, error } = await supabase.auth.getUser();
+    return data.user;
+  } catch (error) {
+    throw new Error(error.message || "Failed to get current user");
   }
 }
 
@@ -84,38 +126,40 @@ export async function logout() {
 /**
  * Get current authenticated user
  */
-export async function getCurrentUser(): Promise<User | null> {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
+// export async function getCurrentUser(): Promise<User | null> {
+//   try {
+//     const { data: { session } } = await supabase.auth.getSession();
+
+//     console.log("session", session.user);
     
-    if (!session?.user) {
-      return null;
-    }
+//     if (!session?.user) {
+//       return null;
+//     }
 
-    // Get user from database using Supabase client
-    const { data: userData, error: userError } = await supabase
-      .from("users")
-      .select("*")
-      .eq("supabaseId", session.user.id)
-      .single();
+//     // Get user from database using Supabase client
+//     const { data: userData, error: userError } = await supabase
+//       .from("users")
+//       .select("*")
+//       .eq("supabaseId", session.user.id)
+//       .single();
 
-    if (userError || !userData || !userData.isActive) {
-      return null;
-    }
+//     if (userError || !userData || !userData.isActive) {
+//       return null;
+//     }
 
-    return {
-      id: userData.id,
-      email: userData.email,
-      name: userData.name,
-      role: userData.role,
-      supabaseId: userData.supabaseId,
-      isActive: userData.isActive,
-    };
-  } catch (error) {
-    console.error("Error getting current user:", error);
-    return null;
-  }
-}
+//     return {
+//       id: userData.id,
+//       email: userData.email,
+//       name: userData.name,
+//       role: userData.role,
+//       supabaseId: userData.supabaseId,
+//       isActive: userData.isActive,
+//     };
+//   } catch (error) {
+//     console.error("Error getting current user:", error);
+//     return null;
+//   }
+// }
 
 /**
  * Request password reset (sends email to user)
@@ -186,23 +230,23 @@ export async function setUserPassword(email: string, password: string): Promise<
         throw new Error(`Failed to list users: ${listError.message}`);
       }
 
-      const user = users.find((u) => u.email === email);
+      // const user = users.find((u) => u.email === email);
       
-      if (!user) {
-        throw new Error(`User with email ${email} not found`);
-      }
+      // if (!user) {
+      //   throw new Error(`User with email ${email} not found`);
+      // }
 
       // Update user password
-      const { data, error: updateError } = await adminClient.auth.admin.updateUserById(
-        user.id,
-        {
-          password: password,
-        }
-      );
+      // const { data, error: updateError } = await adminClient.auth.admin.updateUserById(
+      //   user.id,
+      //   {
+      //     password: password,
+      //   }
+      // );
 
-      if (updateError) {
-        throw new Error(`Failed to update password: ${updateError.message}`);
-      }
+      // if (updateError) {
+      //   throw new Error(`Failed to update password: ${updateError.message}`);
+      // }
 
       return true;
     } else {
@@ -351,7 +395,7 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
     if (session?.user) {
       try {
         const user = await getCurrentUser();
-        callback(user);
+        // callback(user);
       } catch (error) {
         console.error("Error getting user on auth state change:", error);
         callback(null);
