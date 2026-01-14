@@ -3,7 +3,7 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Routes, Route, useNavigate, useParams, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Login from './components/Login';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './protectedRoutes/ProtectedRoute';
 import AdminDashboard from './components/AdminDashboard';
 import ClinicalCopilot from './components/ClinicalCopilot';
 import PatientChart from './components/PatientChart';
@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 // import { AuthProvider } from './contexts/AuthContext';
 import { getCurrentUser } from './services/auth';
+import { useAuth } from './contexts/AuthContext';
 
 const AppContent: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
@@ -77,12 +78,16 @@ const AppContent: React.FC = () => {
     setGlobalSearch(''); 
   };
 
+  const { user, loading } = useAuth();
+
+  console.log("user" , user)
+
   // Dashboard Component
   const DashboardView: React.FC = () => (
     <div className="space-y-6 lg:space-y-8 animate-in fade-in duration-500">
       <div className={`flex flex-col md:flex-row md:items-end justify-between gap-4 ${isRtl ? 'flex-row-reverse text-right' : ''}`}>
         <div>
-          <h1 className={`text-2xl lg:text-3xl font-bold ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>{t.goodMorning}</h1>
+          <h1 className={`text-2xl lg:text-3xl font-bold ${isDark ? 'text-slate-50' : 'text-slate-900'}`}>{t.goodMorning}{user.user_metadata.name}</h1>
           <p className="text-slate-500 mt-1 font-medium">{t.appointmentsToday(appointments.length)}</p>
         </div>
         <div className="flex flex-wrap gap-3">
@@ -442,11 +447,14 @@ const AppContent: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardView />} />
-                <Route path="/admin" element={
+                {/* <Route path="/admin" element={
                   <ProtectedRoute requireAdmin>
                     <AdminDashboard theme={theme} lang={lang} />
                   </ProtectedRoute>
-                } />
+                } /> */}
+
+                <Route path="/admin" element={<AdminDashboard theme={theme} lang={lang} />} />
+
                 <Route path="/patients" element={<PatientsListView />} />
                 <Route path="/patients/:id" element={<PatientDetailView />} />
                 <Route path="/patients/:id/labs" element={<PatientLabsView />} />

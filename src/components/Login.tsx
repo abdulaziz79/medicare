@@ -48,7 +48,7 @@ const Login: React.FC<LoginProps> = ({ theme }) => {
       // await login({ email, password });
       const result = await login(email, password);
 
-      console.log("ress", result);
+      // console.log("ress", result);
 
       if(result && "id" in result) {
         navigate("/dashboard");

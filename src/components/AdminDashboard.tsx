@@ -31,30 +31,30 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ theme, lang }) => {
   const isDark = theme === "dark";
   const t = useI18n(lang);
 
-  useEffect(() => {
-    loadDoctors();
-  }, []);
+  // useEffect(() => {
+  //   loadDoctors();
+  // }, []);
 
-  const loadDoctors = async () => {
-    try {
-      setLoading(true);
-      const { data, error: fetchError } = await supabase
-        .from("users")
-        .select("*")
-        .eq("role", "DOCTOR")
-        .order("createdAt", { ascending: false });
+  // const loadDoctors = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const { data, error: fetchError } = await supabase
+  //       .from("users")
+  //       .select("*")
+  //       .eq("role", "DOCTOR")
+  //       .order("createdAt", { ascending: false });
 
-      if (fetchError) {
-        throw new Error(fetchError.message);
-      }
+  //     if (fetchError) {
+  //       throw new Error(fetchError.message);
+  //     }
 
-      setDoctors(data || []);
-    } catch (err: any) {
-      setError(`Failed to load doctors: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     setDoctors(data || []);
+  //   } catch (err: any) {
+  //     setError(`Failed to load doctors: ${err.message}`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +65,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ theme, lang }) => {
     try {
       // Create user
       const passwordToUse = formData.password || generateTempPassword();
+     
       const result = await createUser({
         email: formData.email,
         name: formData.name,
@@ -90,7 +91,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ theme, lang }) => {
       }
 
       // Reload doctors list
-      await loadDoctors();
+      // await loadDoctors();
 
       // Reset form
       setFormData({ name: "", email: "", password: "" });
@@ -123,13 +124,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ theme, lang }) => {
     setFormData((prev) => ({ ...prev, password }));
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className={`w-8 h-8 animate-spin ${isDark ? "text-blue-400" : "text-blue-600"}`} />
-      </div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="flex items-center justify-center h-64">
+  //       <Loader2 className={`w-8 h-8 animate-spin ${isDark ? "text-blue-400" : "text-blue-600"}`} />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-6">
@@ -349,9 +350,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ theme, lang }) => {
                         )}
                       </div>
                     </td>
-                    <td className={`py-3 px-4 text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                    {/* <td className={`py-3 px-4 text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>
                       {doctor.createdAt ? new Date(doctor.createdAt).toLocaleDateString() : "N/A"}
-                    </td>
+                    </td> */}
                   </tr>
                 ))}
               </tbody>

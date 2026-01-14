@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabase";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export interface User {
   id: string;
@@ -24,61 +25,7 @@ export interface CreateUserData {
 /**
  * Login with email and password
  */
-// export async function login(credentials: LoginCredentials) {
-//   try {
-//     // console.log("logininnnnnnnnnnnnn", credentials);
-//     const { data, error } = await supabase.auth.signInWithPassword({
-//       email: credentials.email,
-//       password: credentials.password,
-//     });
 
-//     console.log("wwwwwww")
-
-//     console.log("authData", data);
-//     console.log("authError", error);
-
-//     if (error) {
-//       throw new Error(error.message);
-//     }
-
-//     if (!data.user) {
-//       throw new Error("Login failed - no user returned");
-//     }
-
-//     // Get user from database using Supabase client
-//     const { data: userData, error: userError } = await supabase
-//       .from("users")
-//       .select("*")
-//       .eq("supabaseId", data.user.id)
-//       .single();
-
-//       console.log("userData", userData);
-//       console.log("userError", userError);
-
-//     if (userError || !userData) {
-//       console.error("User not found in database:", userError);
-//       throw new Error("User not found in database. Please contact an administrator.");
-//     }
-
-//     if (!userData.isActive) {
-//       throw new Error("Your account has been deactivated. Please contact an administrator.");
-//     }
-
-//     return {
-//       user: {
-//         id: userData.id,
-//         email: userData.email,
-//         name: userData.name,
-//         role: userData.role,
-//         supabaseId: userData.supabaseId,
-//         isActive: userData.isActive,
-//       },
-//       session: data.session,
-//     };
-//   } catch (error: any) {
-//     throw new Error(error.message || "Login failed");
-//   }
-// }
 
 export async function login(email: string, password: string) {
   try {
@@ -112,6 +59,7 @@ export async function getCurrentUser() {
  * Logout current user
  */
 export async function logout() {
+  // return true;
   try {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -122,44 +70,6 @@ export async function logout() {
     throw new Error(error.message || "Logout failed");
   }
 }
-
-/**
- * Get current authenticated user
- */
-// export async function getCurrentUser(): Promise<User | null> {
-//   try {
-//     const { data: { session } } = await supabase.auth.getSession();
-
-//     console.log("session", session.user);
-    
-//     if (!session?.user) {
-//       return null;
-//     }
-
-//     // Get user from database using Supabase client
-//     const { data: userData, error: userError } = await supabase
-//       .from("users")
-//       .select("*")
-//       .eq("supabaseId", session.user.id)
-//       .single();
-
-//     if (userError || !userData || !userData.isActive) {
-//       return null;
-//     }
-
-//     return {
-//       id: userData.id,
-//       email: userData.email,
-//       name: userData.name,
-//       role: userData.role,
-//       supabaseId: userData.supabaseId,
-//       isActive: userData.isActive,
-//     };
-//   } catch (error) {
-//     console.error("Error getting current user:", error);
-//     return null;
-//   }
-// }
 
 /**
  * Request password reset (sends email to user)
@@ -276,109 +186,64 @@ export async function setUserPassword(email: string, password: string): Promise<
  * 
  * The password should be generated and sent via email separately.
  */
-export async function createUser(userData: CreateUserData): Promise<{ user: User; password: string }> {
+export async function createUser(
+  userData: CreateUserData
+): Promise<{ user: User; password: string }> {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error("Supabase admin credentials are not configured");
+  }
+
+  const password = userData.password ?? generateTempPassword();
+
+  const adminClient: SupabaseClient = createClient(
+    supabaseUrl,
+    serviceRoleKey,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    }
+  );
+
   try {
-    // Generate a secure temporary password
-    const tempPassword = userData.password || generateTempPassword();
-    
-    // Try to call a Supabase Edge Function (if available)
-    const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL as string) || "";
-    const serviceRoleKey = (process.env.SUPABASE_SERVICE_ROLE_KEY as string) || "";
-    
-    // If we have service role key, use admin API
-    if (serviceRoleKey && supabaseUrl) {
-      try {
-        const { createClient } = await import("@supabase/supabase-js");
-        const adminClient = createClient(supabaseUrl, serviceRoleKey, {
-          auth: {
-            autoRefreshToken: false,
-            persistSession: false,
-          },
-        });
-
-        // Create user in Supabase Auth using admin API
-        const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
-          email: userData.email,
-          password: tempPassword,
-          email_confirm: true, // Auto-confirm email since admin is creating
-        });
-
-        if (authError) {
-          throw new Error(`Supabase auth error: ${authError.message}`);
-        }
-
-        if (!authData.user) {
-          throw new Error("Failed to create user in Supabase Auth");
-        }
-
-        // Create user in database using Supabase client
-        const { data: dbUser, error: dbError } = await supabase
-          .from("users")
-          .insert({
-            email: userData.email,
-            name: userData.name,
-            role: userData.role || "DOCTOR",
-            supabaseId: authData.user.id,
-            isActive: true,
-          })
-          .select()
-          .single();
-
-        if (dbError || !dbUser) {
-          // If database creation fails, try to delete the Supabase user
-          await adminClient.auth.admin.deleteUser(authData.user.id).catch(console.error);
-          throw new Error(`Database error: ${dbError?.message || "Failed to create user"}`);
-        }
-
-        return {
-          user: {
-            id: dbUser.id,
-            email: dbUser.email,
-            name: dbUser.name,
-            role: dbUser.role,
-            supabaseId: dbUser.supabaseId,
-            isActive: dbUser.isActive,
-          },
-          password: tempPassword,
-        };
-      } catch (adminError: any) {
-        console.warn("Admin API failed, using fallback:", adminError.message);
-      }
-    }
-    
-    // Fallback: Create user record in database (Supabase Auth user must be created separately)
-    // This assumes the user already exists in Supabase Auth
-    const { data: dbUser, error: dbError } = await supabase
-      .from("users")
-      .insert({
-        email: userData.email,
+    const { data, error } = await adminClient.auth.admin.createUser({
+      email: userData.email,
+      password,
+      email_confirm: true,
+      user_metadata: {
+        role: userData.role ?? "DOCTOR",
         name: userData.name,
-        role: userData.role || "DOCTOR",
-        isActive: true,
-        // Note: supabaseId will be null until user is created in Supabase Auth
-        // This should be updated after user confirms email/sets password
-      })
-      .select()
-      .single();
+      },
+    });
 
-    if (dbError || !dbUser) {
-      throw new Error(`Database error: ${dbError?.message || "Failed to create user"}`);
+    if (error) {
+      throw new Error(error.message);
     }
 
-    // Return user with password for email sending
+    if (!data?.user) {
+      throw new Error("Supabase returned no user");
+    }
+
     return {
       user: {
-        id: dbUser.id,
-        email: dbUser.email,
-        name: dbUser.name,
-        role: dbUser.role,
-        supabaseId: dbUser.supabaseId,
-        isActive: dbUser.isActive,
+        id: data.user.id,
+        email: data.user.email!,
+        name: userData.name,
+        role: userData.role ?? "DOCTOR",
+        supabaseId: data.user.id,
+        isActive: true,
       },
-      password: tempPassword,
+      password,
     };
-  } catch (error: any) {
-    throw new Error(error.message || "Failed to create user");
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Unknown error creating user";
+    console.error("createUser failed:", message);
+    throw new Error(message);
   }
 }
 
@@ -407,9 +272,9 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
 /**
  * Check if user has admin role
  */
-export function isAdmin(user: User | null): boolean {
-  return user?.role === "ADMIN";
-}
+// export function isAdmin(user: User | null): boolean {
+//   return user?.role === "ADMIN";
+// }
 
 /**
  * Check if user has doctor role

@@ -1,6 +1,5 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-// import { useAuth } from "../contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 
@@ -23,8 +22,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   const { user, loading } = useAuth();
 
-  console.log("user", user);
-  console.log("loading", loading);
+  // console.log("user", user);
+  // console.log("loading", loading);
 
   // Show loading spinner while checking authentication
   if (loading) {

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Language, Theme } from "../types";
 import { useI18n } from "../utils/i18n";
+import { logout } from "../services/auth";
 // import { useAuth } from "../contexts/AuthContext";
 
 interface LayoutProps {
@@ -51,13 +52,11 @@ const Layout: React.FC<LayoutProps> = ({
   // const { user, logout, isAdmin } = useAuth();
   // TODO: Re-implement auth logic
   const user = null;
-  const logout = async () => {};
   const isAdmin = () => false;
 
   const handleLogout = async () => {
     try {
       await logout();
-      navigate("/login");
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -84,12 +83,19 @@ const Layout: React.FC<LayoutProps> = ({
       label: t.analytics,
       icon: BarChart3,
     },
-    ...(isAdmin() ? [{
+    ...(true ? [{
       id: "admin",
       path: "/admin",
       label: "Admin",
       icon: Settings,
-    }] : []),
+    }] 
+    // ...(isAdmin() ? [{
+    //   id: "admin",
+    //   path: "/admin",
+    //   label: "Admin",
+    //   icon: Settings,
+    // }] 
+    : []),
   ];
 
   const isActiveRoute = (path: string) => {
